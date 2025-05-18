@@ -5,7 +5,7 @@ import (
 	"log/slog"
 )
 
-type HandlerFunc func(c telebot.Context) error
+type HandlerFunc func(c telebot.Context, userID int64) error
 
 type Handlers map[string]HandlerFunc
 
@@ -58,9 +58,9 @@ func (f *FSM) Middleware() telebot.HandlerFunc {
 		}
 
 		if handler, ok := f.handlers[state]; ok {
-			return handler(c)
+			return handler(c, userID)
 		}
 
-		return c.Send("Напиши /start чтобы начать.")
+		return nil
 	}
 }

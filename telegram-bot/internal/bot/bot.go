@@ -76,7 +76,7 @@ func (b *Bot) Run() {
 			}},
 		})
 	})
-	// FSM Middleware — на каждое текстовое сообщение
+
 	b.bot.Handle(telebot.OnText, b.fsm.Middleware())
 
 	b.bot.Start()

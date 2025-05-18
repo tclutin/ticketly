@@ -10,3 +10,9 @@ services:
       - './data:/var/lib/postgresql/data'
     ports:
       - '5432:5432'
+
+  redis:
+    image: redis:7.4.2-alpine
+    restart: always
+    ports:
+      - "6379:6379"
