@@ -41,32 +41,6 @@ func New() *Bot {
 }
 
 func (b *Bot) Run() {
-	// Стартовая команда
-	b.bot.Handle("/start", func(c telebot.Context) error {
-		userID := c.Sender().ID
-		_ = b.fsm.Set(userID, "select_type")
-		return c.Send("Выбери тип тикета: чат или одно сообщение?")
-	})
-
-	// FSM: выбор типа тикета
-	b.fsm.Register("select_type", func(c telebot.Context, userID int64) error {
-		// можно сохранить тип тикета отдельно в Redis
-		_ = b.fsm.Set(userID, "select_category")
-		return c.Send("Выбери категорию тикета:")
-	})
-
-	// FSM: выбор категории
-	b.fsm.Register("select_category", func(c telebot.Context, userID int64) error {
-		_ = b.fsm.Set(userID, "write_message")
-		return c.Send("Введите текст обращения:")
-	})
-
-	// FSM: текст обращения
-	b.fsm.Register("write_message", func(c telebot.Context, userID int64) error {
-		_ = b.fsm.Clear(userID)
-		return c.Send("✅ Заявка принята!")
-	})
-
 	b.bot.Handle("/start1", func(c telebot.Context) error {
 		return c.Send("Нажми кнопку, чтобы создать заявку:", &telebot.ReplyMarkup{
 			ResizeKeyboard: true,
