@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Bot BotConfig
+	Bot   BotConfig
+	Redis RedisConfig
 }
 
 type BotConfig struct {
@@ -15,7 +16,14 @@ type BotConfig struct {
 	Timeout time.Duration
 }
 
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+}
+
 func MustLoad() *Config {
+	// BotConfig
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
 		log.Fatalln("BOT_TOKEN is not set")
@@ -31,10 +39,25 @@ func MustLoad() *Config {
 		log.Fatalln("Failed to parse BOT_TIMEOUT:", err)
 	}
 
+	// RedisConfig
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		log.Fatalln("REDIS_HOST is not set")
+	}
+
+	redisPort := os.Getenv("REDIS_PORT")
+	if redisPort == "" {
+		log.Fatalln("REDIS_PORT is not set")
+	}
+
 	return &Config{
 		Bot: BotConfig{
 			Token:   token,
 			Timeout: timeout,
+		},
+		Redis: RedisConfig{
+			Host: redisHost,
+			Port: redisPort,
 		},
 	}
 }
