@@ -28,7 +28,7 @@ type Postgres struct {
 
 type RabbitMQ struct {
 	URL             string `env:"RABBITMQ_URL"`
-	ContentExchange string `env:"RABBITMQ_EXCHANGE"`
+	Exchange        string `env:"RABBITMQ_EXCHANGE"`
 	ToOperatorQueue string `env:"RABBITMQ_TO_OPERATOR_QUEUE"`
 	ToClientQueue   string `env:"RABBITMQ_TO_CLIENT_QUEUE"`
 }
