@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ticketly
     volumes:
-      - './docket/data:/var/lib/postgresql/data'
+      - './docker/pg-data:/var/lib/postgresql/data'
     ports:
       - '5432:5432'
     networks:
