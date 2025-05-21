@@ -26,17 +26,22 @@ type Postgres struct {
 	Database string `env:"POSTGRES_DATABASE"`
 }
 
-type RabbitMQ struct{}
+type RabbitMQ struct {
+	URL             string `env:"RABBITMQ_URL"`
+	ContentExchange string `env:"RABBITMQ_EXCHANGE"`
+	ToOperatorQueue string `env:"RABBITMQ_TO_OPERATOR_QUEUE"`
+	ToClientQueue   string `env:"RABBITMQ_TO_CLIENT_QUEUE"`
+}
 
 func MustLoad() *Config {
 	var config Config
 
 	if err := godotenv.Load(); err != nil {
-		log.Fatalln("failed to load .env file", err)
+		log.Fatalln("failed to load .env file:", err)
 	}
 
 	if err := cleanenv.ReadEnv(&config); err != nil {
-		log.Fatalln("failed to load .env file", err)
+		log.Fatalln("failed to load .env file:", err)
 	}
 	return &config
 }

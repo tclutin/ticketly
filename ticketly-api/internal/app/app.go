@@ -16,7 +16,7 @@ type App struct {
 
 func New() *App {
 	cfg := config.MustLoad()
-	fmt.Println(cfg.Postgres.DSN())
+	fmt.Println(cfg.RabbitMQ)
 
 	postgresClient := postgres.NewClient(context.Background(), cfg.Postgres.DSN())
 
