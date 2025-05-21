@@ -10,7 +10,7 @@ type Consumer struct {
 	channel *amqp091.Channel
 }
 
-func NewConsumer(ch *amqp091.Channel) *Consumer {
+func NewConsumer(ch *amqp091.Channel) EventConsumer {
 	return &Consumer{channel: ch}
 }
 

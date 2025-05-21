@@ -6,7 +6,7 @@ import (
 )
 
 type EventPublisher interface {
-	Publisher(routingKey string) (<-chan amqp091.Delivery, error)
+	Publish(routingKey string, event any) error
 }
 
 type Publisher struct {
@@ -14,7 +14,7 @@ type Publisher struct {
 	exchange string
 }
 
-func NewPublisher(ch *amqp091.Channel, exchange string) *Publisher {
+func NewPublisher(ch *amqp091.Channel, exchange string) EventPublisher {
 	return &Publisher{
 		channel:  ch,
 		exchange: exchange,
