@@ -3,7 +3,7 @@ package rabbitmq
 import "github.com/rabbitmq/amqp091-go"
 
 type EventConsumer interface {
-	Consume(queue string) (<-chan []amqp091.Delivery, error)
+	Consume(queue string) (<-chan amqp091.Delivery, error)
 }
 
 type Consumer struct {
