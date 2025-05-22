@@ -1,0 +1,19 @@
+package service
+
+import (
+	"context"
+	"github.com/tclutin/ticketly/ticketly_api/internal/models"
+	"github.com/tclutin/ticketly/ticketly_api/internal/service/ticket"
+	"github.com/tclutin/ticketly/ticketly_api/internal/service/user"
+)
+
+type UserService interface {
+	GetByExternalId(ctx context.Context, externalId string) (user models.User, err error)
+	GetById(ctx context.Context, userId uint64) (user models.User, err error)
+	Create(ctx context.Context, dto user.RegisterUserDTO) (uint64, error)
+}
+
+type TicketService interface {
+	Create(ctx context.Context, model ticket.CreateTicketDTO) (uint64, error)
+	Close(ctx context.Context, dto ticket.CloseTicketDTO) error
+}
