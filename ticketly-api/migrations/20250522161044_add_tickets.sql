@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS public.messages (
     sender_type VARCHAR(20) CHECK (sender_type IN ('user', 'operator', 'system')),
     content TEXT NOT NULL,
     sentiment VARCHAR(100) CHECK (sentiment IN ('positive', 'neutral', 'negative')),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES public.tickets(ticket_id)
 );
 -- +goose StatementEnd
 
