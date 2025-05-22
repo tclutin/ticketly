@@ -2,18 +2,18 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/tclutin/ticketly/ticketly_api/internal/core"
-	"github.com/tclutin/ticketly/ticketly_api/internal/core/user"
 	"github.com/tclutin/ticketly/ticketly_api/internal/delivery/http/v1/request"
 	"github.com/tclutin/ticketly/ticketly_api/internal/delivery/http/v1/response"
+	"github.com/tclutin/ticketly/ticketly_api/internal/service"
+	"github.com/tclutin/ticketly/ticketly_api/internal/service/user"
 	"net/http"
 )
 
 type UserHandler struct {
-	service core.UserService
+	service service.UserService
 }
 
-func NewUserHandler(service core.UserService) *UserHandler {
+func NewUserHandler(service service.UserService) *UserHandler {
 	return &UserHandler{
 		service: service,
 	}
@@ -36,17 +36,19 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Create(c.Request.Context(), user.RegisterUserDTO{
+	userId, err := h.service.Create(c.Request.Context(), user.RegisterUserDTO{
 		ExternalID: req.ExternalID,
 		Username:   req.Username,
 		Source:     req.Source,
-	}); err != nil {
+	})
+
+	if err != nil {
 		_ = c.Error(err)
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "created",
+		"user_id": userId,
 	})
 }
 

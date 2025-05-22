@@ -3,7 +3,7 @@ package middleware
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	coreerrors "github.com/tclutin/ticketly/ticketly_api/internal/core/errors"
+	coreerrors "github.com/tclutin/ticketly/ticketly_api/internal/service/errors"
 	"net/http"
 )
 
@@ -22,6 +22,10 @@ func ErrorMiddleware() gin.HandlerFunc {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		case errors.Is(err, coreerrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		case errors.Is(err, coreerrors.ErrTicketNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		case errors.Is(err, coreerrors.ErrTicketAlreadyClosed):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		}
