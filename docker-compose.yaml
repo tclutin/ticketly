@@ -13,6 +13,28 @@ services:
     networks:
       - backend
 
+#  zitadel:
+#    restart: 'always'
+#    image: 'ghcr.io/zitadel/zitadel:latest'
+#    command: 'start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled'
+#    environment:
+#      ZITADEL_DATABASE_POSTGRES_HOST: postgres
+#      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+#      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+#      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+#      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel
+#      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+#      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
+#      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgres
+#      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+#      ZITADEL_EXTERNALSECURE: false
+#    depends_on:
+#      - postgres
+#    ports:
+#      - '8080:8080'
+#    networks:
+#      - 'backend'
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -25,6 +47,18 @@ services:
       retries: 5
     networks:
       - backend
+
+  centrifugo:
+    image: centrifugo/centrifugo
+    command: centrifugo -c /centrifugo/config.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docker/centrifugo:/centrifugo
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
 networks:
   backend:
