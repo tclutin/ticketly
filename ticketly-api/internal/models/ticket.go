@@ -8,7 +8,7 @@ type Ticket struct {
 	OperatorID *uint64
 	Status     string
 	Type       string
-	Sentiment  string
+	Sentiment  *string
 	CreatedAt  time.Time
-	ClosedAt   time.Time
+	ClosedAt   *time.Time
 }
