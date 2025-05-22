@@ -1,13 +1,11 @@
 package v1
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ticketly/ticketly_api/internal/core"
-	coreerrors "github.com/tclutin/ticketly/ticketly_api/internal/core/errors"
 	"github.com/tclutin/ticketly/ticketly_api/internal/core/user"
 	"github.com/tclutin/ticketly/ticketly_api/internal/delivery/http/v1/request"
-	"log/slog"
+	"github.com/tclutin/ticketly/ticketly_api/internal/delivery/http/v1/response"
 	"net/http"
 )
 
@@ -38,29 +36,17 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Create(c.Request.Context(), user.RegisterUserDTO{
+	if err := h.service.Create(c.Request.Context(), user.RegisterUserDTO{
 		ExternalID: req.ExternalID,
 		Username:   req.Username,
 		Source:     req.Source,
-	})
-
-	if err != nil {
-		if errors.Is(err, coreerrors.ErrUserAlreadyExists) {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		slog.Error("error fuck", slog.Any("error", err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
-		})
+	}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": "successfully",
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "created",
 	})
 }
 
@@ -69,19 +55,16 @@ func (h *UserHandler) GetByExternalId(c *gin.Context) {
 
 	usr, err := h.service.GetByExternalId(c.Request.Context(), externalID)
 	if err != nil {
-		if errors.Is(err, coreerrors.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		slog.Error("error fuck", slog.Any("error", err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
-		})
+		_ = c.Error(err)
 		return
 	}
 
-	c.JSON(200, usr)
+	c.JSON(http.StatusOK, response.User{
+		UserID:     usr.UserID,
+		ExternalID: usr.ExternalID,
+		Username:   usr.Username,
+		Source:     usr.Source,
+		IsBanned:   usr.IsBanned,
+		CreatedAt:  usr.CreatedAt,
+	})
 }
