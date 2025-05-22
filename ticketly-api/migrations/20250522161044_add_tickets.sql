@@ -6,9 +6,10 @@ CREATE TABLE IF NOT EXISTS public.tickets (
     operator_id BIGINT,
     status VARCHAR(100) NOT NULL CHECK (status IN ('open', 'in_progress', 'closed')) DEFAULT 'open',
     type VARCHAR(100) NOT NULL CHECK (type IN ('only-message', 'realtime-chat')),
-    sentiment VARCHAR(100) CHECK (sentiment IN ('positive', 'neutral', 'negative')),
+    sentiment VARCHAR(100) CHECK (sentiment IS NULL OR sentiment IN ('positive', 'neutral', 'negative')),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    closed_at TIMESTAMP
+    closed_at TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.messages (
