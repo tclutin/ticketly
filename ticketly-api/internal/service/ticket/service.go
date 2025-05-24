@@ -64,7 +64,9 @@ func (s *Service) Create(ctx context.Context, dto CreateTicketDTO) (uint64, erro
 	return ticketId, nil
 }
 
-func (s *Service) GetAll(ctx context.Context) ([]models.Ticket, error) {}
+func (s *Service) GetAll(ctx context.Context) ([]models.PreviewTicket, error) {
+	return s.repo.GetAllWithFirstMessage(ctx)
+}
 
 // Close TODO refactor and tx
 func (s *Service) Close(ctx context.Context, dto CloseTicketDTO) error {

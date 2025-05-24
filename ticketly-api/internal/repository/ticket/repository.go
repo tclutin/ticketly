@@ -50,8 +50,37 @@ func (r *Repository) Create(ctx context.Context, ticket models.Ticket) (uint64, 
 	return ticketId, nil
 }
 
-func (r *Repository) GetAll(ctx context.Context, ticket models.Ticket) {
+func (r *Repository) GetAllWithFirstMessage(ctx context.Context) ([]models.PreviewTicket, error) {
+	sql := `
+			SELECT
+				ticket_id,
+				type,
+				status,
+				content as preview,
+				sentiment,
+				created_at,
+				closed_at
+			FROM
+				public.tickets
+			LEFT JOIN LATERAL (
+			  	SELECT content
+			  	FROM messages
+			  	WHERE messages.ticket_id = tickets.ticket_id
+			  	ORDER BY created_at ASC
+			  	LIMIT 1
+			) m ON true`
 
+	rows, err := r.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+
+	tickets, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.PreviewTicket])
+	if err != nil {
+		return nil, err
+	}
+
+	return tickets, nil
 }
 
 // Update TODO: лучше сделать обновление по конкретным полям, но времени не хватает

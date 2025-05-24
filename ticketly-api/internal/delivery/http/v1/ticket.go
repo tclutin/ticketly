@@ -55,7 +55,12 @@ func (t *TicketHandler) Create(c *gin.Context) {
 }
 
 func (t *TicketHandler) GetAll(c *gin.Context) {
+	tickets, err := t.service.GetAll(c.Request.Context())
+	if err != nil {
+		_ = c.Error(err)
+	}
 
+	c.JSON(http.StatusOK, tickets)
 }
 
 func (t *TicketHandler) Close(c *gin.Context) {

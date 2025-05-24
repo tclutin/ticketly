@@ -15,5 +15,6 @@ type UserService interface {
 
 type TicketService interface {
 	Create(ctx context.Context, model ticket.CreateTicketDTO) (uint64, error)
+	GetAll(ctx context.Context) ([]models.PreviewTicket, error)
 	Close(ctx context.Context, dto ticket.CloseTicketDTO) error
 }

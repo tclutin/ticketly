@@ -12,3 +12,13 @@ type Ticket struct {
 	CreatedAt  time.Time
 	ClosedAt   *time.Time
 }
+
+type PreviewTicket struct {
+	TicketID  uint64     `json:"ticket_id" db:"ticket_id"`
+	Type      string     `json:"type" db:"type"`
+	Status    string     `json:"status" db:"status"`
+	Preview   string     `json:"preview" db:"preview"`
+	Sentiment *string    `json:"sentiment" db:"sentiment"`
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
+	ClosedAt  *time.Time `json:"closed_at" db:"closed_at"`
+}
