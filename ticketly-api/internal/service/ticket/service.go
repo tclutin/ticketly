@@ -30,6 +30,7 @@ func NewService(
 	}
 }
 
+// Create TODO refactor and tx
 func (s *Service) Create(ctx context.Context, dto CreateTicketDTO) (uint64, error) {
 	_, err := s.userRepo.GetById(ctx, dto.UserID)
 	if err != nil {
@@ -63,6 +64,9 @@ func (s *Service) Create(ctx context.Context, dto CreateTicketDTO) (uint64, erro
 	return ticketId, nil
 }
 
+func (s *Service) GetAll(ctx context.Context) ([]models.Ticket, error) {}
+
+// Close TODO refactor and tx
 func (s *Service) Close(ctx context.Context, dto CloseTicketDTO) error {
 	ticket, err := s.repo.GetTicketById(ctx, dto.TicketID)
 	if err != nil {
@@ -109,6 +113,8 @@ func (s *Service) Close(ctx context.Context, dto CloseTicketDTO) error {
 	if err = s.publisher.Publish("chat.outgoing", event); err != nil {
 		return err
 	}
+
+	//centrifuga disconnect?
 
 	return nil
 }

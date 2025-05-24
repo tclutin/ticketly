@@ -22,6 +22,7 @@ func NewTicketHandler(service service.TicketService) *TicketHandler {
 func (t *TicketHandler) Bind(router *gin.RouterGroup) {
 	ticketsGroup := router.Group("/tickets")
 	{
+		ticketsGroup.GET("", t.GetAll)
 		ticketsGroup.POST("", t.Create)
 		ticketsGroup.POST("/:ticket_id/close", t.Close)
 	}
@@ -50,6 +51,10 @@ func (t *TicketHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"ticket_id": ticketId,
 	})
+
+}
+
+func (t *TicketHandler) GetAll(c *gin.Context) {
 
 }
 
