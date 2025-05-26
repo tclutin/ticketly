@@ -13,27 +13,16 @@ services:
     networks:
       - backend
 
-#  zitadel:
-#    restart: 'always'
-#    image: 'ghcr.io/zitadel/zitadel:latest'
-#    command: 'start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled'
-#    environment:
-#      ZITADEL_DATABASE_POSTGRES_HOST: postgres
-#      ZITADEL_DATABASE_POSTGRES_PORT: 5432
-#      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
-#      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
-#      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel
-#      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
-#      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
-#      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgres
-#      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-#      ZITADEL_EXTERNALSECURE: false
-#    depends_on:
-#      - postgres
-#    ports:
-#      - '8080:8080'
-#    networks:
-#      - 'backend'
+  casdoor:
+    image: casbin/casdoor:latest
+    container_name: casdoor
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./docker/casdoor/app.conf:/conf/app.conf:ro   # монтируем конфиг
+    restart: unless-stopped
+    networks:
+      - backend
 
   rabbitmq:
     image: rabbitmq:3-management

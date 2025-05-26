@@ -5,12 +5,14 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 	"log"
+	"time"
 )
 
 type Config struct {
-	HTTP     HTTPServer
-	Postgres Postgres
-	RabbitMQ RabbitMQ
+	HTTP       HTTPServer
+	Postgres   Postgres
+	RabbitMQ   RabbitMQ
+	Centrifugo Centrifugo
 }
 
 type HTTPServer struct {
@@ -31,6 +33,13 @@ type RabbitMQ struct {
 	Exchange        string `env:"RABBITMQ_EXCHANGE"`
 	ToOperatorQueue string `env:"RABBITMQ_TO_OPERATOR_QUEUE"`
 	ToClientQueue   string `env:"RABBITMQ_TO_CLIENT_QUEUE"`
+}
+
+type Centrifugo struct {
+	URL    string        `env:"CENTRIFUGO_API_URL"`
+	APIKey string        `env:"CENTRIFUGO_API_KEY"`
+	Secret string        `env:"CENTRIFUGO_JWT_SECRET"`
+	TTL    time.Duration `env:"CENTRIFUGO_JWT_TTL"`
 }
 
 func MustLoad() *Config {

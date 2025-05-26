@@ -10,7 +10,7 @@ import (
 func InitRouter(userSrv service.UserService, ticketSrv service.TicketService) *gin.Engine {
 	router := gin.Default()
 
-	router.Use(middleware.ErrorMiddleware(), gin.Recovery())
+	router.Use(middleware.ErrorMiddleware(), gin.Recovery(), middleware.CORSMiddleware())
 
 	usersHandler := v1.NewUserHandler(userSrv)
 	ticketsHandler := v1.NewTicketHandler(ticketSrv)

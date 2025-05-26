@@ -12,6 +12,7 @@ import (
 	userRepository "github.com/tclutin/ticketly/ticketly_api/internal/repository/user"
 	ticketService "github.com/tclutin/ticketly/ticketly_api/internal/service/ticket"
 	userService "github.com/tclutin/ticketly/ticketly_api/internal/service/user"
+	"github.com/tclutin/ticketly/ticketly_api/pkg/client/centrifugo"
 	"github.com/tclutin/ticketly/ticketly_api/pkg/client/postgres"
 	"github.com/tclutin/ticketly/ticketly_api/pkg/client/rabbitmq"
 	"net"
@@ -39,7 +40,11 @@ func New() *App {
 		cfg.RabbitMQ.ToOperatorQueue,
 	)
 
+	centrifugoClient := centrifugo.New(cfg.Centrifugo.URL, cfg.Centrifugo.APIKey, cfg.Centrifugo.Secret)
+
 	publisher := rabbitmq2.NewPublisher(rabbitmqClient.Ch(), cfg.RabbitMQ.Exchange)
+
+	consumer := rabbitmq2.NewConsumer(rabbitmqClient.Ch())
 
 	//users stuff
 	userRepo := userRepository.NewRepository(postgresClient)
@@ -52,7 +57,10 @@ func New() *App {
 	//tickets stuff
 	ticketRepo := ticketRepository.NewRepository(postgresClient)
 
-	ticketSrv := ticketService.NewService(ticketRepo, userRepo, messageRepo, publisher)
+	ticketSrv := ticketService.NewService(ticketRepo, userRepo, messageRepo, publisher, consumer, centrifugoClient)
+	if err := ticketSrv.ConsumeClients(context.Background()); err != nil {
+		panic(err)
+	}
 
 	router := http2.InitRouter(userSrv, ticketSrv)
 

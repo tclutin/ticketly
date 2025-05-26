@@ -25,6 +25,14 @@ func (t *TicketHandler) Bind(router *gin.RouterGroup) {
 		ticketsGroup.GET("", t.GetAll)
 		ticketsGroup.POST("", t.Create)
 		ticketsGroup.POST("/:ticket_id/close", t.Close)
+		ticketsGroup.POST("/:ticket_id/assign", t.Assign)
+		ticketsGroup.GET("/:ticket_id/messages", t.GetHistory)
+		ticketsGroup.POST("/:ticket_id/messages", t.SendMessage)
+	}
+
+	operatorsGroup := router.Group("/operators")
+	{
+		operatorsGroup.GET("/tickets/connections", t.GetActiveConnections)
 	}
 }
 
@@ -54,6 +62,18 @@ func (t *TicketHandler) Create(c *gin.Context) {
 
 }
 
+func (t *TicketHandler) GetActiveConnections(c *gin.Context) {
+	operatorId := 228
+
+	connections, err := t.service.GetActiveConnections(c.Request.Context(), uint64(operatorId))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, connections)
+}
+
 func (t *TicketHandler) GetAll(c *gin.Context) {
 	tickets, err := t.service.GetAll(c.Request.Context())
 	if err != nil {
@@ -61,6 +81,79 @@ func (t *TicketHandler) GetAll(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, tickets)
+}
+
+func (t *TicketHandler) Assign(c *gin.Context) {
+	ticketStr := c.Param("ticket_id")
+	operatorId := 228
+
+	ticketId, err := strconv.ParseUint(ticketStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket_id"})
+		return
+	}
+
+	assigned, err := t.service.Assign(c.Request.Context(), ticket.AssignTicketDTO{
+		TicketID:   ticketId,
+		OperatorID: uint64(operatorId),
+	})
+
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, assigned)
+}
+
+func (t *TicketHandler) GetHistory(c *gin.Context) {
+	ticketStr := c.Param("ticket_id")
+
+	ticketId, err := strconv.ParseUint(ticketStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket_id"})
+		return
+	}
+
+	messages, err := t.service.GetHistory(c.Request.Context(), ticketId)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, messages)
+}
+
+func (t *TicketHandler) SendMessage(c *gin.Context) {
+	ticketStr := c.Param("ticket_id")
+	operaotrId := 228
+
+	ticketId, err := strconv.ParseUint(ticketStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket_id"})
+		return
+	}
+
+	var req request.SendMessageRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": "invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	if err = t.service.SendMessage(c.Request.Context(), ticket.SendMessageDTO{
+		TicketID:   ticketId,
+		OperatorID: uint64(operaotrId),
+		Message:    req.Message,
+	}); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "created",
+	})
 }
 
 func (t *TicketHandler) Close(c *gin.Context) {

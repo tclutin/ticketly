@@ -131,3 +131,20 @@ func (r *Repository) GetTicketById(ctx context.Context, ticketId uint64) (models
 
 	return ticket, nil
 }
+
+// GetActiveTickets TODO: сделать потом универсальный метод
+func (r *Repository) GetInProgressRealtimeTickets(ctx context.Context, operatorId uint64) ([]models.Ticket, error) {
+	sql := `SELECT * FROM public.tickets WHERE status = 'in_progress' AND type = 'realtime-chat' AND operator_id = $1`
+
+	rows, err := r.pool.Query(ctx, sql, operatorId)
+	if err != nil {
+		return nil, err
+	}
+
+	tickets, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Ticket])
+	if err != nil {
+		return nil, err
+	}
+
+	return tickets, nil
+}

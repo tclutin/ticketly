@@ -9,3 +9,7 @@ type CreateTicketRequest struct {
 type CloseTicketRequest struct {
 	Content string `json:"content" binding:"required,min=6,max=500"`
 }
+
+type SendMessageRequest struct {
+	Message string `json:"Message" binding:"required,min=6,max=500"`
+}

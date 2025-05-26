@@ -17,4 +17,8 @@ type TicketService interface {
 	Create(ctx context.Context, model ticket.CreateTicketDTO) (uint64, error)
 	GetAll(ctx context.Context) ([]models.PreviewTicket, error)
 	Close(ctx context.Context, dto ticket.CloseTicketDTO) error
+	Assign(ctx context.Context, dto ticket.AssignTicketDTO) (ticket.AssignedTicketDTO, error)
+	GetHistory(ctx context.Context, ticketId uint64) ([]models.MessagePreview, error)
+	SendMessage(ctx context.Context, dto ticket.SendMessageDTO) error
+	GetActiveConnections(ctx context.Context, operatorId uint64) (ticket.ConnectionsDTO, error)
 }

@@ -15,9 +15,11 @@ type TicketRepository interface {
 	Create(ctx context.Context, ticket models.Ticket) (uint64, error)
 	Update(ctx context.Context, ticketId uint64, model models.Ticket) error
 	GetTicketById(ctx context.Context, ticketId uint64) (models.Ticket, error)
+	GetInProgressRealtimeTickets(ctx context.Context, operatorId uint64) ([]models.Ticket, error)
 	GetAllWithFirstMessage(ctx context.Context) ([]models.PreviewTicket, error)
 }
 
 type MessageRepository interface {
 	Create(ctx context.Context, msg models.Message) (uint64, error)
+	GetAll(ctx context.Context, ticketId uint64) ([]models.MessagePreview, error)
 }
