@@ -3,6 +3,7 @@ package bot
 import (
 	"github.com/tclutin/ticketly/telegram_bot/internal/config"
 	"github.com/tclutin/ticketly/telegram_bot/internal/handler"
+	"github.com/tclutin/ticketly/telegram_bot/pkg/client/ticketly"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2/pkg/storage/memory"
 	"github.com/vitaliy-ukiru/telebot-filter/v2/dispatcher"
@@ -11,11 +12,14 @@ import (
 )
 
 type Bot struct {
-	bot *telebot.Bot
+	bot    *telebot.Bot
+	client ticketly.Client
 }
 
 func New() *Bot {
 	cfg := config.MustLoad()
+
+	client := ticketly.NewTicketly()
 
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:     cfg.Bot.Token,
@@ -29,7 +33,8 @@ func New() *Bot {
 	}
 
 	return &Bot{
-		bot: bot,
+		bot:    bot,
+		client: client,
 	}
 }
 

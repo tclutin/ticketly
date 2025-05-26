@@ -6,10 +6,12 @@ import (
 	fsmstate "github.com/tclutin/ticketly/telegram_bot/internal/fsm"
 	"github.com/tclutin/ticketly/telegram_bot/internal/keyboard"
 	"github.com/tclutin/ticketly/telegram_bot/internal/message"
+	"github.com/tclutin/ticketly/telegram_bot/pkg/client/ticketly"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2/fsmopt"
 	"gopkg.in/telebot.v4"
 	"log/slog"
+	"strconv"
 )
 
 type Handler struct {
@@ -27,6 +29,7 @@ func NewHandler(dp fsm.Dispatcher, mn *fsm.Manager, bot *telebot.Bot) *Handler {
 }
 
 func (h *Handler) Register() {
+	// only one message
 	h.dp.Dispatch(
 		h.mn.New(
 			fsmopt.On(telebot.OnText),
@@ -145,6 +148,45 @@ func (h *Handler) contentTicketFSM(c telebot.Context, state fsm.Context) error {
 func (h *Handler) confirmTicketFSM(c telebot.Context, state fsm.Context) error {
 	switch c.Text() {
 	case "✅ Да":
+		var ticketType string
+		if err := state.Data(context.Background(), "type", &ticketType); err != nil {
+			slog.Error("failed to update content state", slog.Any("error", err))
+			return err
+		}
+
+		var content string
+		if err := state.Data(context.Background(), "content", &content); err != nil {
+			slog.Error("failed to update content state", slog.Any("error", err))
+			return err
+		}
+
+		client := ticketly.NewTicketly()
+
+		userID, err := client.Register(ticketly.RegisterUserRequest{
+			ExternalID: strconv.FormatInt(c.Sender().ID, 10),
+			Username:   c.Sender().Username,
+			Source:     ticketly.Telegram,
+		})
+
+		fmt.Println(userID)
+		if err != nil {
+			slog.Error("failed to register user", slog.Any("error", err))
+			return err
+		}
+
+		ticketid, err := client.CreateTicket(ticketly.CreateTicketRequest{
+			Type:    ticketly.TicketType(ticketType),
+			UserID:  userID,
+			Content: content,
+		})
+
+		if err != nil {
+			slog.Error("failed to create ticket", slog.Any("error", err))
+			return err
+		}
+
+		fmt.Println(ticketid)
+
 		if err := state.Finish(context.Background(), true); err != nil {
 			slog.Error("failed to finish FSM state", slog.Any("error", err))
 			return err
@@ -168,7 +210,7 @@ func (h *Handler) confirmTicketFSM(c telebot.Context, state fsm.Context) error {
 func (h *Handler) onTextFSM(c telebot.Context, state fsm.Context) error {
 	switch c.Text() {
 	case "📝 Only-one-message":
-		if err := state.Update(context.Background(), "type", "only-one-message"); err != nil {
+		if err := state.Update(context.Background(), "type", "one-message"); err != nil {
 			slog.Error("failed to update FSM state", slog.Any("error", err))
 			return err
 		}
@@ -181,15 +223,15 @@ func (h *Handler) onTextFSM(c telebot.Context, state fsm.Context) error {
 		return c.Send(message.HelpMessage, keyboard.CreateCancelMenu())
 
 	case "💬 Realtime-chat":
-		//if err := state.Update(context.Background(), "type", "realtime"); err != nil {
-		//	slog.Error("failed to update FSM state", slog.Any("error", err))
-		//	return err
-		//}
-		//
-		//if err := state.SetState(context.Background(), fsmstate.Content); err != nil {
-		//	slog.Error("failed to set FSM state", slog.Any("error", err))
-		//	return err
-		//}
+		if err := state.Update(context.Background(), "type", "realtime-chat"); err != nil {
+			slog.Error("failed to update FSM state", slog.Any("error", err))
+			return err
+		}
+
+		if err := state.SetState(context.Background(), fsmstate.Content); err != nil {
+			slog.Error("failed to set FSM state", slog.Any("error", err))
+			return err
+		}
 
 		return c.Send("Опишите вашу проблему для realtime-чата", keyboard.CreateCancelMenu())
 
