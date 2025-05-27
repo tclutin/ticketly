@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -19,7 +20,7 @@ type Ticketly struct {
 func NewTicketly() *Ticketly {
 	return &Ticketly{
 		client: &http.Client{},
-		apiURL: "http://localhost:8090",
+		apiURL: "http://localhost:8090/api/v1",
 	}
 }
 
@@ -48,12 +49,21 @@ func (t *Ticketly) Register(request RegisterUserRequest) (uint64, error) {
 	}
 	defer resp.Body.Close()
 
-	var userId uint64
-	if err = json.NewDecoder(resp.Body).Decode(&userId); err != nil {
+	if resp.StatusCode != http.StatusCreated {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		fmt.Println(string(bodyBytes))
+		return 0, fmt.Errorf("failed to register user: invalid status code: %d", resp.StatusCode)
+	}
+
+	var response struct {
+		UserId uint64 `json:"user_id"`
+	}
+
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return 0, fmt.Errorf("failed to decode response body: %w", err)
 	}
 
-	return userId, nil
+	return response.UserId, nil
 }
 
 func (t *Ticketly) CreateTicket(request CreateTicketRequest) (uint64, error) {
@@ -81,10 +91,16 @@ func (t *Ticketly) CreateTicket(request CreateTicketRequest) (uint64, error) {
 	}
 	defer resp.Body.Close()
 
-	var ticketId uint64
-	if err = json.NewDecoder(resp.Body).Decode(&ticketId); err != nil {
+	if resp.StatusCode != http.StatusCreated {
+		return 0, fmt.Errorf("failed to create ticket: invalid status code: %d", resp.StatusCode)
+	}
+
+	var response struct {
+		TicketId uint64 `json:"ticket_id"`
+	}
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return 0, fmt.Errorf("failed to decode response body: %w", err)
 	}
 
-	return ticketId, nil
+	return response.TicketId, nil
 }

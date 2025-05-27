@@ -41,9 +41,9 @@ func (c CreateTicketRequest) Validate() error {
 }
 
 type RegisterUserRequest struct {
-	ExternalID string
-	Username   string
-	Source     Source
+	ExternalID string `json:"external_id"`
+	Username   string `json:"username"`
+	Source     Source `json:"source"`
 }
 
 func (c RegisterUserRequest) Validate() error {
