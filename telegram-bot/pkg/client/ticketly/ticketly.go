@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -50,8 +49,6 @@ func (t *Ticketly) Register(request RegisterUserRequest) (uint64, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		fmt.Println(string(bodyBytes))
 		return 0, fmt.Errorf("failed to register user: invalid status code: %d", resp.StatusCode)
 	}
 
