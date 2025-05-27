@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type Client interface {
 	CreateTicket(request CreateTicketRequest) (uint64, error)
+	Register(request RegisterUserRequest) (uint64, error)
 }
 
 type Ticketly struct {
@@ -49,7 +51,7 @@ func (t *Ticketly) Register(request RegisterUserRequest) (uint64, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		return 0, fmt.Errorf("failed to register user: invalid status code: %d", resp.StatusCode)
+		return 0, fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
 
 	var response struct {
@@ -61,6 +63,35 @@ func (t *Ticketly) Register(request RegisterUserRequest) (uint64, error) {
 	}
 
 	return response.UserId, nil
+}
+
+func (t *Ticketly) GetUserByExternalId(externalId string) (UserResponse, error) {
+	endpoint := fmt.Sprintf("%s/users/%s", t.apiURL, url.PathEscape(externalId))
+
+	var response UserResponse
+
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		return response, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := t.client.Do(req)
+	if err != nil {
+		return response, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return response, fmt.Errorf("invalid status code: %d", resp.StatusCode)
+	}
+
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return response, fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	return response, nil
 }
 
 func (t *Ticketly) CreateTicket(request CreateTicketRequest) (uint64, error) {

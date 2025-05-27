@@ -2,6 +2,7 @@ package ticketly
 
 import (
 	"fmt"
+	"time"
 	"unicode/utf8"
 )
 
@@ -60,4 +61,13 @@ func (c RegisterUserRequest) Validate() error {
 	}
 
 	return nil
+}
+
+type UserResponse struct {
+	UserID     uint64    `json:"user_id"`
+	ExternalID string    `json:"external_id"`
+	Username   string    `json:"username"`
+	Source     string    `json:"source"`
+	IsBanned   bool      `json:"is_banned"`
+	CreatedAt  time.Time `json:"created_at"`
 }
