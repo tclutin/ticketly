@@ -11,6 +11,7 @@ import (
 type Client interface {
 	CreateTicket(request CreateTicketRequest) (uint64, error)
 	Register(request RegisterUserRequest) (uint64, error)
+	GetUserByExternalId(externalId string) (UserResponse, error)
 }
 
 type Ticketly struct {
