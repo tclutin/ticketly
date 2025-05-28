@@ -3,6 +3,8 @@ package bot
 import (
 	"github.com/tclutin/ticketly/telegram_bot/internal/config"
 	"github.com/tclutin/ticketly/telegram_bot/internal/handler"
+	"github.com/tclutin/ticketly/telegram_bot/internal/middleware"
+	"github.com/tclutin/ticketly/telegram_bot/internal/service"
 	"github.com/tclutin/ticketly/telegram_bot/pkg/client/ticketly"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2/pkg/storage/memory"
@@ -19,7 +21,9 @@ type Bot struct {
 func New() *Bot {
 	cfg := config.MustLoad()
 
-	client := ticketly.NewTicketly()
+	client := ticketly.NewClient()
+
+	srv := service.NewTicketService(client)
 
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:     cfg.Bot.Token,
@@ -32,6 +36,16 @@ func New() *Bot {
 		return nil
 	}
 
+	g := bot.Group()
+
+	dp := dispatcher.NewDispatcher(g)
+
+	mn := fsm.New(memory.NewStorage())
+
+	bot.Use(middleware.EnsureRegisteredMiddleware(srv))
+
+	handler.NewHandler(dp, mn, bot, srv).Register()
+
 	return &Bot{
 		bot:    bot,
 		client: client,
@@ -39,13 +53,5 @@ func New() *Bot {
 }
 
 func (b *Bot) Run() {
-	g := b.bot.Group()
-
-	dp := dispatcher.NewDispatcher(g)
-
-	mn := fsm.New(memory.NewStorage())
-
-	handler.NewHandler(dp, mn, b.bot).Register()
-
 	b.bot.Start()
 }

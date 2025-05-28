@@ -19,7 +19,7 @@ type Ticketly struct {
 	apiURL string
 }
 
-func NewTicketly() *Ticketly {
+func NewClient() *Ticketly {
 	return &Ticketly{
 		client: &http.Client{},
 		apiURL: "http://localhost:8090/api/v1",

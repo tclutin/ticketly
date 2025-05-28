@@ -6,25 +6,26 @@ import (
 	fsmstate "github.com/tclutin/ticketly/telegram_bot/internal/fsm"
 	"github.com/tclutin/ticketly/telegram_bot/internal/keyboard"
 	"github.com/tclutin/ticketly/telegram_bot/internal/message"
-	"github.com/tclutin/ticketly/telegram_bot/pkg/client/ticketly"
+	"github.com/tclutin/ticketly/telegram_bot/internal/service"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2/fsmopt"
 	"gopkg.in/telebot.v4"
 	"log/slog"
-	"strconv"
 )
 
 type Handler struct {
 	dp  fsm.Dispatcher
 	mn  *fsm.Manager
 	bot *telebot.Bot
+	srv service.Ticketly
 }
 
-func NewHandler(dp fsm.Dispatcher, mn *fsm.Manager, bot *telebot.Bot) *Handler {
+func NewHandler(dp fsm.Dispatcher, mn *fsm.Manager, bot *telebot.Bot, srv service.Ticketly) *Handler {
 	return &Handler{
 		dp:  dp,
 		mn:  mn,
 		bot: bot,
+		srv: srv,
 	}
 }
 
@@ -160,33 +161,6 @@ func (h *Handler) confirmTicketFSM(c telebot.Context, state fsm.Context) error {
 			return err
 		}
 
-		client := ticketly.NewTicketly()
-
-		userID, err := client.Register(ticketly.RegisterUserRequest{
-			ExternalID: strconv.FormatInt(c.Sender().ID, 10),
-			Username:   c.Sender().Username,
-			Source:     ticketly.Telegram,
-		})
-
-		fmt.Println(userID)
-		if err != nil {
-			slog.Error("failed to register user", slog.Any("error", err))
-			return err
-		}
-
-		ticketid, err := client.CreateTicket(ticketly.CreateTicketRequest{
-			Type:    ticketly.TicketType(ticketType),
-			UserID:  userID,
-			Content: content,
-		})
-
-		if err != nil {
-			slog.Error("failed to create ticket", slog.Any("error", err))
-			return err
-		}
-
-		fmt.Println(ticketid)
-
 		if err := state.Finish(context.Background(), true); err != nil {
 			slog.Error("failed to finish FSM state", slog.Any("error", err))
 			return err
@@ -210,7 +184,7 @@ func (h *Handler) confirmTicketFSM(c telebot.Context, state fsm.Context) error {
 func (h *Handler) onTextFSM(c telebot.Context, state fsm.Context) error {
 	switch c.Text() {
 	case "📝 Only-one-message":
-		if err := state.Update(context.Background(), "type", "one-message"); err != nil {
+		if err := state.Update(context.Background(), "type", "only-message"); err != nil {
 			slog.Error("failed to update FSM state", slog.Any("error", err))
 			return err
 		}
@@ -239,3 +213,40 @@ func (h *Handler) onTextFSM(c telebot.Context, state fsm.Context) error {
 		return nil
 	}
 }
+
+//
+//func (h *Handler) EnsureUserRegisteredMiddleware(next fsm.Handler) fsm.Handler {
+//	return func(c telebot.Context, state fsm.Context) error {
+//		userId := strconv.FormatInt(c.Sender().ID, 10)
+//		username := c.Sender().Username
+//
+//		if _, err := h.srv.CreateUser(userId, username); err != nil {
+//			slog.Error("failed to ensure user registration in FSM",
+//				slog.String("user_id", userId),
+//				slog.String("username", username),
+//				slog.Any("error", err))
+//
+//			return c.Send("❗ Вы не зарегистрированы в системе. Попробуйте позже.")
+//		}
+//
+//		return next(c, state)
+//	}
+//}
+//
+//func (h *Handler) EnsureRegisteredMiddleware(next telebot.HandlerFunc) telebot.HandlerFunc {
+//	return func(c telebot.Context) error {
+//		userId := strconv.FormatInt(c.Sender().ID, 10)
+//		username := c.Sender().Username
+//
+//		_, err := h.srv.CreateUser(userId, username)
+//		if err != nil {
+//			slog.Error("failed to ensure user registration",
+//				slog.String("user_id", userId),
+//				slog.String("username", username),
+//				slog.Any("error", err))
+//			return c.Send("❗ Произошла ошибка при регистрации. Попробуйте позже.")
+//		}
+//
+//		return next(c)
+//	}
+//}
