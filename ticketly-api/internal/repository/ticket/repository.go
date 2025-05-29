@@ -3,6 +3,7 @@ package ticket
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tclutin/ticketly/ticketly_api/internal/models"
@@ -147,4 +148,16 @@ func (r *Repository) GetInProgressRealtimeTickets(ctx context.Context, operatorI
 	}
 
 	return tickets, nil
+}
+
+func (r *Repository) HasActiveRealtimeTicket(ctx context.Context, userID uint64) (bool, error) {
+	sql := `SELECT COUNT(*) FROM public.tickets WHERE user_id = $1 AND status IN ('open', 'in_progress') AND type = 'realtime-chat'`
+
+	var count int
+	err := r.pool.QueryRow(ctx, sql, userID).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to count active tickets: %w", err)
+	}
+
+	return count > 0, nil
 }

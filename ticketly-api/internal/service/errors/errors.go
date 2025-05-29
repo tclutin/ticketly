@@ -11,4 +11,5 @@ var (
 	ErrTicketWrongType                 = errors.New("ticket wrong type")
 	ErrTicketWrongStatus               = errors.New("ticket wrong status")
 	ErrOperatorNotAssigned             = errors.New("operator not assigned")
+	ErrActiveTicketAlreadyExists       = errors.New("user already has an active ticket")
 )

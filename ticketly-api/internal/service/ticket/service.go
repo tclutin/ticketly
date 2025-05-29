@@ -50,6 +50,14 @@ func (s *Service) Create(ctx context.Context, dto CreateTicketDTO) (uint64, erro
 		return 0, err
 	}
 
+	exists, err := s.repo.HasActiveRealtimeTicket(ctx, dto.UserID)
+	if err != nil {
+		return 0, err
+	}
+	if exists {
+		return 0, coreerrors.ErrActiveTicketAlreadyExists
+	}
+
 	ticket := models.Ticket{
 		UserID:    dto.UserID,
 		Type:      dto.Type,

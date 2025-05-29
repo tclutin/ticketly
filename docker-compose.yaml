@@ -13,16 +13,6 @@ services:
     networks:
       - backend
 
-  casdoor:
-    image: casbin/casdoor:latest
-    container_name: casdoor
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./docker/casdoor/app.conf:/conf/app.conf:ro   # монтируем конфиг
-    restart: unless-stopped
-    networks:
-      - backend
 
   rabbitmq:
     image: rabbitmq:3-management
