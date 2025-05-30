@@ -7,7 +7,7 @@ import (
 	"net"
 )
 
-func NewClientRedis(host, port string) *redis.Client {
+func NewClient(host, port string) *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     net.JoinHostPort(host, port),
 		Password: "",

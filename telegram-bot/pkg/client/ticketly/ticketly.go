@@ -3,9 +3,14 @@ package ticketly
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+)
+
+var (
+	ErrActiveTicketAlreadyExists = errors.New("user already has an active ticket")
 )
 
 type Client interface {
@@ -119,6 +124,10 @@ func (t *Ticketly) CreateTicket(request CreateTicketRequest) (uint64, error) {
 		return 0, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusConflict {
+		return 0, ErrActiveTicketAlreadyExists
+	}
 
 	if resp.StatusCode != http.StatusCreated {
 		return 0, fmt.Errorf("failed to create ticket: invalid status code: %d", resp.StatusCode)

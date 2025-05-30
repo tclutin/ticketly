@@ -1,10 +1,15 @@
 package bot
 
 import (
+	"context"
+	"github.com/tclutin/ticketly/telegram_bot/internal/broker"
 	"github.com/tclutin/ticketly/telegram_bot/internal/config"
 	"github.com/tclutin/ticketly/telegram_bot/internal/handler"
 	"github.com/tclutin/ticketly/telegram_bot/internal/middleware"
 	"github.com/tclutin/ticketly/telegram_bot/internal/service"
+	"github.com/tclutin/ticketly/telegram_bot/internal/storage"
+	rabbitmq2 "github.com/tclutin/ticketly/telegram_bot/pkg/client/rabbitmq"
+	"github.com/tclutin/ticketly/telegram_bot/pkg/client/redis"
 	"github.com/tclutin/ticketly/telegram_bot/pkg/client/ticketly"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2"
 	"github.com/vitaliy-ukiru/fsm-telebot/v2/pkg/storage/memory"
@@ -14,16 +19,24 @@ import (
 )
 
 type Bot struct {
-	bot    *telebot.Bot
-	client ticketly.Client
+	bot      *telebot.Bot
+	rabbitmq *rabbitmq2.Client
 }
 
 func New() *Bot {
 	cfg := config.MustLoad()
 
-	client := ticketly.NewClient()
+	rabbitmqClient := rabbitmq2.NewClient(cfg.RabbitMQ.URL, cfg.RabbitMQ.Exchange)
 
-	srv := service.NewTicketService(client)
+	redisClient := redis.NewClient(cfg.Redis.Host, cfg.Redis.Port)
+
+	redisStorage := storage.NewStorage(redisClient)
+
+	publisher := broker.NewPublisher(rabbitmqClient.Ch(), cfg.RabbitMQ.Exchange)
+
+	consumer := broker.NewConsumer(rabbitmqClient.Ch())
+
+	client := ticketly.NewClient()
 
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:     cfg.Bot.Token,
@@ -36,22 +49,38 @@ func New() *Bot {
 		return nil
 	}
 
+	sendToTelegram := func(chatId int64, msg string) error {
+		_, err := bot.Send(&telebot.Chat{ID: chatId}, msg)
+		return err
+	}
+
+	srv := service.NewTicketService(client, redisStorage, consumer, sendToTelegram)
+
+	if err = srv.ListenerOutgoing(context.Background(), "chat.outgoing"); err != nil {
+		slog.Error("failed to initialize listener", slog.Any("error", err))
+		return nil
+	}
+
 	g := bot.Group()
 
 	dp := dispatcher.NewDispatcher(g)
 
 	mn := fsm.New(memory.NewStorage())
 
-	bot.Use(middleware.EnsureRegisteredMiddleware(srv))
+	bot.Use(middleware.RedirectMiddleware(redisStorage, publisher), middleware.EnsureRegisteredMiddleware(srv))
 
 	handler.NewHandler(dp, mn, bot, srv).Register()
 
 	return &Bot{
-		bot:    bot,
-		client: client,
+		bot:      bot,
+		rabbitmq: rabbitmqClient,
 	}
 }
 
 func (b *Bot) Run() {
 	b.bot.Start()
+}
+
+func (b *Bot) Stop() {
+	//TODO
 }

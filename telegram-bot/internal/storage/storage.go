@@ -2,16 +2,17 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"strconv"
+	"github.com/tclutin/ticketly/telegram_bot/internal/models"
 )
 
 type Storage interface {
-	Set(ctx context.Context, ticketId, chatId uint64) error
-	Get(ctx context.Context, ticketId uint64) (uint64, error)
-	Delete(ctx context.Context, ticketID string) error
+	SetChatMeta(ctx context.Context, chatId int64, meta models.RealtimeChatMeta) error
+	GetChatMeta(ctx context.Context, chatId int64) (models.RealtimeChatMeta, error)
+	DeleteChatMeta(ctx context.Context, chatId int64) error
 }
 
 type RedisStorage struct {
@@ -24,35 +25,39 @@ func NewStorage(client *redis.Client) *RedisStorage {
 	}
 }
 
-func (r *RedisStorage) Set(ctx context.Context, ticketId, chatId uint64) error {
-	key := fmt.Sprintf("chat:ticket:%d", ticketId)
+func (r *RedisStorage) SetChatMeta(ctx context.Context, chatId int64, meta models.RealtimeChatMeta) error {
+	key := fmt.Sprintf("chat:%d", chatId)
 
-	if err := r.client.Set(ctx, key, chatId, 0).Err(); err != nil {
+	data, err := json.Marshal(meta)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	return r.client.Set(ctx, key, data, 0).Err()
 }
 
-func (r *RedisStorage) Get(ctx context.Context, ticketId uint64) (uint64, error) {
-	key := fmt.Sprintf("chat:ticket:%d", ticketId)
+func (r *RedisStorage) GetChatMeta(ctx context.Context, chatId int64) (models.RealtimeChatMeta, error) {
+	key := fmt.Sprintf("chat:%d", chatId)
+
+	var meta models.RealtimeChatMeta
 
 	val, err := r.client.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return 0, nil
+			return meta, nil
 		}
-		return 0, err
+
+		return models.RealtimeChatMeta{}, err
 	}
 
-	chatId, err := strconv.ParseUint(val, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid chatID in redis: %w", err)
+	if err := json.Unmarshal([]byte(val), &meta); err != nil {
+		return meta, err
 	}
 
-	return chatId, nil
+	return meta, nil
 }
 
-func (r *RedisStorage) Delete(ctx context.Context, ticketID string) error {
-	return r.client.Del(ctx, ticketID).Err()
+func (r *RedisStorage) DeleteChatMeta(ctx context.Context, chatId int64) error {
+	key := fmt.Sprintf("chat:%d", chatId)
+	return r.client.Del(ctx, key).Err()
 }
