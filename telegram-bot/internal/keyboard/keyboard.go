@@ -4,8 +4,8 @@ import "gopkg.in/telebot.v4"
 
 const (
 	BtnCreateTicket       = "📨 Создать тикет"
-	BtnTicketTypeRealtime = "💬 Чат с оператором"
-	BtnTicketTypeSingle   = "📝 Отправить сообщение"
+	BtnTicketTypeRealtime = "💬 Чат с поддержкой"
+	BtnTicketTypeSingle   = "📝 Отправить запрос"
 	BtnBack               = "🔙 Назад"
 	BtnConfirmYes         = "✅ Да"
 	BtnConfirmNo          = "❌ Нет"

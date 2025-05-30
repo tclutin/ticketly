@@ -79,6 +79,7 @@ func (t *TicketService) CreateTicket(userId uint64, chatId int64, ticketType, co
 	return nil
 }
 
+// ListenerOutgoing wtf context?? i need to use but in another time...
 func (t *TicketService) ListenerOutgoing(ctx context.Context, queue string) error {
 	msgs, err := t.consumer.Consume(queue)
 	if err != nil {

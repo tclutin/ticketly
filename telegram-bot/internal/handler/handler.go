@@ -244,7 +244,7 @@ func (h *Handler) onTextFSM(c telebot.Context, state fsm.Context) error {
 			return err
 		}
 
-		return c.Send("Опишите вашу проблему для realtime-чата", keyboard.CreateCancelMenu())
+		return c.Send(message.RealtimePrompt, keyboard.CreateCancelMenu())
 
 	default:
 		return nil
