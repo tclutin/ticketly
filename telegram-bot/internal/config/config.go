@@ -7,19 +7,26 @@ import (
 )
 
 type Config struct {
-	Bot   BotConfig
-	Redis RedisConfig
+	Bot      Bot
+	Redis    Redis
+	RabbitMQ RabbitMQ
 }
 
-type BotConfig struct {
+type Bot struct {
 	Token   string
 	Timeout time.Duration
 }
 
-type RedisConfig struct {
+type Redis struct {
 	Host     string
 	Port     string
 	Password string
+}
+
+type RabbitMQ struct {
+	URL      string `env:"RABBITMQ_URL"`
+	Exchange string `env:"RABBITMQ_EXCHANGE"`
+	//queue?
 }
 
 func MustLoad() *Config {
@@ -50,14 +57,29 @@ func MustLoad() *Config {
 		log.Fatalln("REDIS_PORT is not set")
 	}
 
+	// RabbitMQConfig
+	rabbitmqHost := os.Getenv("RABBITMQ_URL")
+	if rabbitmqHost == "" {
+		log.Fatalln("RABBITMQ_URL is not set")
+	}
+
+	rabbitmqExchange := os.Getenv("RABBITMQ_EXCHANGE")
+	if rabbitmqExchange == "" {
+		log.Fatalln("RABBITMQ_EXCHANGE is not set")
+	}
+
 	return &Config{
-		Bot: BotConfig{
+		Bot: Bot{
 			Token:   token,
 			Timeout: timeout,
 		},
-		Redis: RedisConfig{
+		Redis: Redis{
 			Host: redisHost,
 			Port: redisPort,
+		},
+		RabbitMQ: RabbitMQ{
+			URL:      rabbitmqHost,
+			Exchange: rabbitmqExchange,
 		},
 	}
 }
