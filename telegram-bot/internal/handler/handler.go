@@ -106,7 +106,7 @@ func (h *Handler) CancelOperation() telebot.HandlerFunc {
 			return err
 		}
 
-		return c.Send("Выберите опцию:", keyboard.CreateTicketTypeMenu())
+		return c.Send("Выберите опцию", keyboard.CreateTicketTypeMenu())
 	}
 }
 
@@ -191,7 +191,12 @@ func (h *Handler) confirmTicketFSM(c telebot.Context, state fsm.Context) error {
 					slog.Error("failed to cancel operation", slog.Any("error", err))
 					return err
 				}
-				return c.Send("❗ Вы уже создали тикет, дождитесь оператора.", keyboard.CreateMainMenu())
+
+				msg := "❗ У вас уже есть активное обращение\n\n" +
+					"Пока оно не будет обработано, создание новых обращений недоступно. " +
+					"Наш специалист свяжется с вами в ближайшее время."
+
+				return c.Send(msg, keyboard.CreateMainMenu())
 			}
 
 			slog.Error("failed to create ticket", slog.Any("error", err))
