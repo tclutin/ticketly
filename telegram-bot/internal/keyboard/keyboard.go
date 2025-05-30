@@ -2,16 +2,21 @@ package keyboard
 
 import "gopkg.in/telebot.v4"
 
+const (
+	BtnCreateTicket       = "📨 Создать тикет"
+	BtnTicketTypeRealtime = "💬 Чат с оператором"
+	BtnTicketTypeSingle   = "📝 Отправить сообщение"
+	BtnBack               = "🔙 Назад"
+	BtnConfirmYes         = "✅ Да"
+	BtnConfirmNo          = "❌ Нет"
+	BtnCancel             = "❌ Отмена"
+)
+
 func CreateMainMenu() *telebot.ReplyMarkup {
 	return &telebot.ReplyMarkup{
 		ResizeKeyboard: true,
 		ReplyKeyboard: [][]telebot.ReplyButton{
-			{
-				{Text: "📨 Создать тикет"},
-			},
-			{
-				{Text: "📂 Мои обращения"},
-			},
+			{{Text: BtnCreateTicket}},
 		},
 	}
 }
@@ -21,12 +26,10 @@ func CreateTicketTypeMenu() *telebot.ReplyMarkup {
 		ResizeKeyboard: true,
 		ReplyKeyboard: [][]telebot.ReplyButton{
 			{
-				{Text: "💬 Realtime-chat"},
-				{Text: "📝 Only-one-message"},
+				{Text: BtnTicketTypeRealtime},
+				{Text: BtnTicketTypeSingle},
 			},
-			{
-				{Text: "🔙 Назад"},
-			},
+			{{Text: BtnBack}},
 		},
 	}
 }
@@ -36,8 +39,8 @@ func CreateConfirmMenu() *telebot.ReplyMarkup {
 		ResizeKeyboard: true,
 		ReplyKeyboard: [][]telebot.ReplyButton{
 			{
-				{Text: "✅ Да"},
-				{Text: "❌ Нет"},
+				{Text: BtnConfirmYes},
+				{Text: BtnConfirmNo},
 			},
 		},
 	}
@@ -47,9 +50,7 @@ func CreateCancelMenu() *telebot.ReplyMarkup {
 	return &telebot.ReplyMarkup{
 		ResizeKeyboard: true,
 		ReplyKeyboard: [][]telebot.ReplyButton{
-			{
-				{Text: "❌ Отмена"},
-			},
+			{{Text: BtnCancel}},
 		},
 	}
 }
