@@ -112,11 +112,17 @@ func (s *Service) Assign(ctx context.Context, dto AssignTicketDTO) (AssignedTick
 		return AssignedTicketDTO{}, err
 	}
 
+	user, err := s.repo.GetUserByTicketId(ctx, ticket.TicketID)
+	if err != nil {
+		return AssignedTicketDTO{}, err
+	}
+
 	ticketEvent := models.TicketMessageEvent{
-		TicketID: ticket.TicketID,
-		Status:   ticket.Status,
-		Type:     ticket.Type,
-		Content:  fmt.Sprintf("Оператор подключился к чату. Ваш тикет #%d.", ticket.TicketID),
+		ExternalID: user.ExternalID,
+		TicketID:   ticket.TicketID,
+		Status:     ticket.Status,
+		Type:       ticket.Type,
+		Content:    fmt.Sprintf("Оператор подключился к чату. Ваш тикет #%d.", ticket.TicketID),
 	}
 
 	if err = s.publisher.Publish("chat.outgoing", ticketEvent); err != nil {
@@ -176,11 +182,17 @@ func (s *Service) SendMessage(ctx context.Context, dto SendMessageDTO) error {
 		return err
 	}
 
+	user, err := s.repo.GetUserByTicketId(ctx, ticket.TicketID)
+	if err != nil {
+		return err
+	}
+
 	ticketEvent := models.TicketMessageEvent{
-		TicketID: ticket.TicketID,
-		Status:   ticket.Status,
-		Type:     ticket.Type,
-		Content:  dto.Message,
+		ExternalID: user.ExternalID,
+		TicketID:   ticket.TicketID,
+		Status:     ticket.Status,
+		Type:       ticket.Type,
+		Content:    dto.Message,
 	}
 
 	if err = s.publisher.Publish("chat.outgoing", ticketEvent); err != nil {
