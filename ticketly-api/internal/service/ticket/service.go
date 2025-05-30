@@ -112,7 +112,7 @@ func (s *Service) Assign(ctx context.Context, dto AssignTicketDTO) (AssignedTick
 		return AssignedTicketDTO{}, err
 	}
 
-	ticketEvent := models.TicketEvent{
+	ticketEvent := models.TicketMessageEvent{
 		TicketID: ticket.TicketID,
 		Status:   ticket.Status,
 		Type:     ticket.Type,
@@ -176,7 +176,7 @@ func (s *Service) SendMessage(ctx context.Context, dto SendMessageDTO) error {
 		return err
 	}
 
-	ticketEvent := models.TicketEvent{
+	ticketEvent := models.TicketMessageEvent{
 		TicketID: ticket.TicketID,
 		Status:   ticket.Status,
 		Type:     ticket.Type,
@@ -210,7 +210,7 @@ func (s *Service) ConsumeClients(ctx context.Context) error {
 
 	go func() {
 		for msg := range msgs {
-			var event models.TicketEvent
+			var event models.TicketMessageEvent
 			if err = json.Unmarshal(msg.Body, &event); err != nil {
 				slog.Error("unmarshal failed:", slog.Any("error", err))
 				continue
@@ -319,8 +319,6 @@ func (s *Service) Close(ctx context.Context, dto CloseTicketDTO) error {
 		return coreerrors.ErrTicketAlreadyClosedOrInProgress
 	}
 
-	//operatorid, сделать проверку, чтобы другой человек не смог закрыть тикет
-
 	now := time.Now().UTC()
 
 	ticket.Status = "closed"
@@ -343,11 +341,17 @@ func (s *Service) Close(ctx context.Context, dto CloseTicketDTO) error {
 		return err
 	}
 
-	event := models.TicketEvent{
-		TicketID: ticket.TicketID,
-		Status:   ticket.Status,
-		Type:     ticket.Type,
-		Content:  dto.Message,
+	user, err := s.repo.GetUserByTicketId(ctx, ticket.TicketID)
+	if err != nil {
+		return err
+	}
+
+	event := models.TicketMessageEvent{
+		TicketID:   ticket.TicketID,
+		ExternalID: user.ExternalID,
+		Status:     ticket.Status,
+		Type:       ticket.Type,
+		Content:    dto.Message,
 	}
 
 	if err = s.publisher.Publish("chat.outgoing", event); err != nil {

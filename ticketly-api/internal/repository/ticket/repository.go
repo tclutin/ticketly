@@ -51,6 +51,66 @@ func (r *Repository) Create(ctx context.Context, ticket models.Ticket) (uint64, 
 	return ticketId, nil
 }
 
+func (r *Repository) GetUserByTicketId(ctx context.Context, ticketId uint64) (models.User, error) {
+	query := `SELECT u.user_id, u.external_id, u.username, u.source, u.is_banned, u.created_at FROM users AS u INNER JOIN tickets AS t ON u.user_id = t.user_id WHERE t.ticket_id = $1`
+
+	row := r.pool.QueryRow(ctx, query, ticketId)
+
+	var user models.User
+	err := row.Scan(&user.UserID, &user.ExternalID, &user.Username, &user.Source, &user.IsBanned, &user.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return user, coreerrors.ErrUserNotFound
+		}
+	}
+
+	return user, nil
+}
+
+func (r *Repository) GetTicketById(ctx context.Context, ticketId uint64) (models.Ticket, error) {
+	sql := `SELECT * FROM public.tickets WHERE ticket_id = $1`
+
+	row := r.pool.QueryRow(ctx, sql, ticketId)
+
+	var ticket models.Ticket
+	err := row.Scan(
+		&ticket.TicketID,
+		&ticket.UserID,
+		&ticket.OperatorID,
+		&ticket.Status,
+		&ticket.Type,
+		&ticket.Sentiment,
+		&ticket.CreatedAt,
+		&ticket.ClosedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.Ticket{}, coreerrors.ErrTicketNotFound
+		}
+		return ticket, err
+	}
+
+	return ticket, nil
+}
+
+// GetActiveTickets TODO: сделать потом универсальный метод
+func (r *Repository) GetInProgressRealtimeTickets(ctx context.Context, operatorId uint64) ([]models.Ticket, error) {
+	sql := `SELECT * FROM public.tickets WHERE status = 'in_progress' AND type = 'realtime-chat' AND operator_id = $1`
+
+	rows, err := r.pool.Query(ctx, sql, operatorId)
+	if err != nil {
+		return nil, err
+	}
+
+	tickets, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Ticket])
+	if err != nil {
+		return nil, err
+	}
+
+	return tickets, nil
+}
+
 func (r *Repository) GetAllWithFirstMessage(ctx context.Context) ([]models.PreviewTicket, error) {
 	sql := `
 			SELECT
@@ -106,55 +166,11 @@ func (r *Repository) Update(ctx context.Context, ticketId uint64, model models.T
 	return err
 }
 
-func (r *Repository) GetTicketById(ctx context.Context, ticketId uint64) (models.Ticket, error) {
-	sql := `SELECT * FROM public.tickets WHERE ticket_id = $1`
-
-	row := r.pool.QueryRow(ctx, sql, ticketId)
-
-	var ticket models.Ticket
-	err := row.Scan(
-		&ticket.TicketID,
-		&ticket.UserID,
-		&ticket.OperatorID,
-		&ticket.Status,
-		&ticket.Type,
-		&ticket.Sentiment,
-		&ticket.CreatedAt,
-		&ticket.ClosedAt,
-	)
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Ticket{}, coreerrors.ErrTicketNotFound
-		}
-		return ticket, err
-	}
-
-	return ticket, nil
-}
-
-// GetActiveTickets TODO: сделать потом универсальный метод
-func (r *Repository) GetInProgressRealtimeTickets(ctx context.Context, operatorId uint64) ([]models.Ticket, error) {
-	sql := `SELECT * FROM public.tickets WHERE status = 'in_progress' AND type = 'realtime-chat' AND operator_id = $1`
-
-	rows, err := r.pool.Query(ctx, sql, operatorId)
-	if err != nil {
-		return nil, err
-	}
-
-	tickets, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Ticket])
-	if err != nil {
-		return nil, err
-	}
-
-	return tickets, nil
-}
-
-func (r *Repository) HasActiveRealtimeTicket(ctx context.Context, userID uint64) (bool, error) {
+func (r *Repository) HasActiveRealtimeTicket(ctx context.Context, userId uint64) (bool, error) {
 	sql := `SELECT COUNT(*) FROM public.tickets WHERE user_id = $1 AND status IN ('open', 'in_progress') AND type = 'realtime-chat'`
 
 	var count int
-	err := r.pool.QueryRow(ctx, sql, userID).Scan(&count)
+	err := r.pool.QueryRow(ctx, sql, userId).Scan(&count)
 	if err != nil {
 		return false, fmt.Errorf("failed to count active tickets: %w", err)
 	}

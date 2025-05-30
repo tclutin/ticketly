@@ -15,6 +15,7 @@ type TicketRepository interface {
 	Create(ctx context.Context, ticket models.Ticket) (uint64, error)
 	Update(ctx context.Context, ticketId uint64, model models.Ticket) error
 	GetTicketById(ctx context.Context, ticketId uint64) (models.Ticket, error)
+	GetUserByTicketId(ctx context.Context, ticketId uint64) (models.User, error)
 	GetInProgressRealtimeTickets(ctx context.Context, operatorId uint64) ([]models.Ticket, error)
 	GetAllWithFirstMessage(ctx context.Context) ([]models.PreviewTicket, error)
 	HasActiveRealtimeTicket(ctx context.Context, userID uint64) (bool, error)

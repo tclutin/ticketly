@@ -26,9 +26,10 @@ package models
 //	CreatedAt  time.Time `json:"created_at"`
 //}
 
-type TicketEvent struct {
-	TicketID uint64 `json:"ticket_id"`
-	Status   string `json:"status"`
-	Type     string `json:"type"`
-	Content  string `json:"content"`
+type TicketMessageEvent struct {
+	TicketID   uint64 `json:"ticket_id"`
+	ExternalID string `json:"external_id"`
+	Status     string `json:"status"`
+	Type       string `json:"type"`
+	Content    string `json:"content"`
 }
