@@ -35,7 +35,7 @@ func ErrorMiddleware() gin.HandlerFunc {
 		case errors.Is(err, coreerrors.ErrActiveTicketAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		}
 
 		c.Abort()

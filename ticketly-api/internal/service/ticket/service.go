@@ -236,7 +236,7 @@ func (s *Service) ConsumeClients(ctx context.Context) error {
 
 			model := models.Message{
 				TicketID:   event.TicketID,
-				SenderType: "client",
+				SenderType: "user",
 				Content:    event.Content,
 				CreatedAt:  time.Now().UTC(),
 			}
@@ -320,7 +320,7 @@ func (s *Service) NewSubscriptionToken(userID uint64, channel string, ttl time.D
 	return token.SignedString([]byte("app.go"))
 }
 
-// Close TODO refactor and tx
+// Close TODO refactor and tx | need to check type of ticket for closing | realtime with open status -> nope
 func (s *Service) Close(ctx context.Context, dto CloseTicketDTO) error {
 	ticket, err := s.repo.GetTicketById(ctx, dto.TicketID)
 	if err != nil {
