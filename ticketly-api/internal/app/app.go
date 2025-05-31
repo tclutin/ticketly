@@ -38,6 +38,8 @@ func New() *App {
 		cfg.RabbitMQ.Exchange,
 		cfg.RabbitMQ.ToClientQueue,
 		cfg.RabbitMQ.ToOperatorQueue,
+		cfg.RabbitMQ.MLAnalysisQueue,
+		cfg.RabbitMQ.MLResultsQueue,
 	)
 
 	centrifugoClient := centrifugo.New(cfg.Centrifugo.URL, cfg.Centrifugo.APIKey, cfg.Centrifugo.Secret)
@@ -59,6 +61,10 @@ func New() *App {
 
 	ticketSrv := ticketService.NewService(ticketRepo, userRepo, messageRepo, publisher, consumer, centrifugoClient)
 	if err := ticketSrv.ConsumeClients(context.Background()); err != nil {
+		panic(err)
+	}
+
+	if err := ticketSrv.ConsumeMLResults(context.Background()); err != nil {
 		panic(err)
 	}
 

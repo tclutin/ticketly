@@ -259,6 +259,72 @@ func (s *Service) ConsumeClients(ctx context.Context) error {
 				slog.Error("failed to publish to centrifugo", slog.Any("error", err))
 				continue
 			}
+
+			eventAnalysis := models.MlAnalysisEvent{
+				MessageID: messageId,
+				TicketID:  event.TicketID,
+				Content:   event.Content,
+			}
+
+			if err = s.publisher.Publish("ml.analysis", eventAnalysis); err != nil {
+				slog.Error("failed to publish message", slog.Any("error", err))
+				continue
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (s *Service) ConsumeMLResults(ctx context.Context) error {
+	msgs, err := s.consumer.Consume("ml.results")
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for msg := range msgs {
+			var event models.MlResultEvent
+			if err := json.Unmarshal(msg.Body, &event); err != nil {
+				slog.Error("failed to unmarshal ML result", slog.Any("error", err))
+				continue
+			}
+
+			ticket, err := s.repo.GetTicketById(ctx, event.TicketID)
+			if err != nil {
+				slog.Error("ticket not found:", slog.Any("error", err))
+				continue
+			}
+
+			message, err := s.messageRepo.GetById(ctx, event.MessageID)
+			if err != nil {
+				slog.Error("failed to get message", slog.Any("error", err))
+				continue
+			}
+
+			message.Sentiment = &event.Sentiment
+
+			if err = s.messageRepo.Update(ctx, message.MessageID, message); err != nil {
+				slog.Error("failed to update message", slog.Any("error", err))
+				continue
+			}
+
+			//стоит ли делать отдельный канал для обновлений, мб потом
+			if ticket.Type == "realtime-chat" {
+				messageEvent := models.MessagePreview{
+					Content:    message.Content,
+					MessageID:  message.MessageID,
+					TicketID:   ticket.TicketID,
+					Sentiment:  message.Sentiment,
+					SenderType: "operator",
+					CreatedAt:  time.Now().UTC(),
+				}
+
+				if err = s.centrifugo.Publish(s.ToChannel(ticket.TicketID), messageEvent); err != nil {
+					slog.Error("failed to publish to centrifugo", slog.Any("error", err))
+					continue
+				}
+			}
 		}
 	}()
 

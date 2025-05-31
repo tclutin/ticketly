@@ -23,5 +23,7 @@ type TicketRepository interface {
 
 type MessageRepository interface {
 	Create(ctx context.Context, msg models.Message) (uint64, error)
+	Update(ctx context.Context, messageId uint64, msg models.Message) error
+	GetById(ctx context.Context, messageId uint64) (models.Message, error)
 	GetAll(ctx context.Context, ticketId uint64) ([]models.MessagePreview, error)
 }

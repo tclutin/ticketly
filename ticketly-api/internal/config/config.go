@@ -33,6 +33,8 @@ type RabbitMQ struct {
 	Exchange        string `env:"RABBITMQ_EXCHANGE"`
 	ToOperatorQueue string `env:"RABBITMQ_TO_OPERATOR_QUEUE"`
 	ToClientQueue   string `env:"RABBITMQ_TO_CLIENT_QUEUE"`
+	MLAnalysisQueue string `env:"RABBITMQ_ML_ANALYSIS_QUEUE"`
+	MLResultsQueue  string `env:"RABBITMQ_ML_RESULTS_QUEUE"`
 }
 
 type Centrifugo struct {

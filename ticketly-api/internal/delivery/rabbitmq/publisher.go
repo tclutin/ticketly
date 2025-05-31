@@ -30,5 +30,6 @@ func (p *Publisher) Publish(routingKey string, event any) error {
 	return p.channel.Publish(p.exchange, routingKey, false, false, amqp091.Publishing{
 		ContentType: "application/json",
 		Body:        bytes,
+		//DeliveryMode: amqp091.Persistent,
 	})
 }
