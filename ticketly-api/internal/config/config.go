@@ -13,6 +13,7 @@ type Config struct {
 	Postgres   Postgres
 	RabbitMQ   RabbitMQ
 	Centrifugo Centrifugo
+	Casdoor    Casdoor
 }
 
 type HTTPServer struct {
@@ -42,6 +43,15 @@ type Centrifugo struct {
 	APIKey string        `env:"CENTRIFUGO_API_KEY"`
 	Secret string        `env:"CENTRIFUGO_JWT_SECRET"`
 	TTL    time.Duration `env:"CENTRIFUGO_JWT_TTL"`
+}
+
+type Casdoor struct {
+	Endpoint     string `env:"CASDOOR_ENDPOINT"`
+	ClientID     string `env:"CASDOOR_CLIENT_ID"`
+	ClientSecret string `env:"CASDOOR_CLIENT_SECRET"`
+	Organization string `env:"CASDOOR_ORGANIZATION"`
+	Application  string `env:"CASDOOR_APPLICATION"`
+	Certificate  string `env:"CASDOOR_CERTIFICATE"`
 }
 
 func MustLoad() *Config {

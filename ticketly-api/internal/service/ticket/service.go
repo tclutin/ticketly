@@ -55,6 +55,7 @@ func (s *Service) Create(ctx context.Context, dto CreateTicketDTO) (uint64, erro
 		if err != nil {
 			return 0, err
 		}
+
 		if exists {
 			return 0, coreerrors.ErrActiveTicketAlreadyExists
 		}
@@ -79,8 +80,19 @@ func (s *Service) Create(ctx context.Context, dto CreateTicketDTO) (uint64, erro
 		CreatedAt:  time.Now().UTC(),
 	}
 
-	_, err = s.messageRepo.Create(ctx, msg)
+	messageId, err := s.messageRepo.Create(ctx, msg)
 	if err != nil {
+		return 0, err
+	}
+
+	eventAnalysis := models.MlAnalysisEvent{
+		MessageID: messageId,
+		TicketID:  ticketId,
+		Content:   dto.Content,
+	}
+
+	if err = s.publisher.Publish("ml.analysis", eventAnalysis); err != nil {
+		slog.Error("failed to publish message", slog.Any("error", err))
 		return 0, err
 	}
 
@@ -316,7 +328,7 @@ func (s *Service) ConsumeMLResults(ctx context.Context) error {
 					MessageID:  message.MessageID,
 					TicketID:   ticket.TicketID,
 					Sentiment:  message.Sentiment,
-					SenderType: "operator",
+					SenderType: "client",
 					CreatedAt:  time.Now().UTC(),
 				}
 

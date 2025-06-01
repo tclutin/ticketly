@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"github.com/casdoor/casdoor-go-sdk/casdoorsdk"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tclutin/ticketly/ticketly_api/internal/config"
 	http2 "github.com/tclutin/ticketly/ticketly_api/internal/delivery/http"
@@ -42,6 +43,14 @@ func New() *App {
 		cfg.RabbitMQ.MLResultsQueue,
 	)
 
+	casdoorClient := casdoorsdk.NewClient(
+		cfg.Casdoor.Endpoint,
+		cfg.Casdoor.ClientID,
+		cfg.Casdoor.ClientSecret,
+		cfg.Casdoor.Certificate,
+		cfg.Casdoor.Organization,
+		cfg.Casdoor.Application)
+
 	centrifugoClient := centrifugo.New(cfg.Centrifugo.URL, cfg.Centrifugo.APIKey, cfg.Centrifugo.Secret)
 
 	publisher := rabbitmq2.NewPublisher(rabbitmqClient.Ch(), cfg.RabbitMQ.Exchange)
@@ -68,7 +77,7 @@ func New() *App {
 		panic(err)
 	}
 
-	router := http2.InitRouter(userSrv, ticketSrv)
+	router := http2.InitRouter(userSrv, ticketSrv, casdoorClient)
 
 	return &App{
 		pgClient:       postgresClient,

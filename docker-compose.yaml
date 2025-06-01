@@ -13,6 +13,17 @@ services:
     networks:
       - backend
 
+  casdoor:
+    image: casbin/casdoor
+    container_name: casdoor-app
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./docker/casdoor/app.conf:/conf/app.conf
+    depends_on:
+      - postgres
+    networks:
+      - backend
 
   rabbitmq:
     image: rabbitmq:3-management
