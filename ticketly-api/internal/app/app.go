@@ -9,8 +9,10 @@ import (
 	http2 "github.com/tclutin/ticketly/ticketly_api/internal/delivery/http"
 	rabbitmq2 "github.com/tclutin/ticketly/ticketly_api/internal/delivery/rabbitmq"
 	messageRepository "github.com/tclutin/ticketly/ticketly_api/internal/repository/message"
+	operatorRepository "github.com/tclutin/ticketly/ticketly_api/internal/repository/operator"
 	ticketRepository "github.com/tclutin/ticketly/ticketly_api/internal/repository/ticket"
 	userRepository "github.com/tclutin/ticketly/ticketly_api/internal/repository/user"
+	operatorService "github.com/tclutin/ticketly/ticketly_api/internal/service/operator"
 	ticketService "github.com/tclutin/ticketly/ticketly_api/internal/service/ticket"
 	userService "github.com/tclutin/ticketly/ticketly_api/internal/service/user"
 	"github.com/tclutin/ticketly/ticketly_api/pkg/client/centrifugo"
@@ -62,6 +64,11 @@ func New() *App {
 
 	userSrv := userService.NewService(userRepo)
 
+	//operators stuff
+	operatorRepo := operatorRepository.NewRepository(postgresClient)
+
+	operatorSrv := operatorService.NewService(operatorRepo)
+
 	//messages stuff
 	messageRepo := messageRepository.NewRepository(postgresClient)
 
@@ -77,7 +84,7 @@ func New() *App {
 		panic(err)
 	}
 
-	router := http2.InitRouter(userSrv, ticketSrv, casdoorClient)
+	router := http2.InitRouter(userSrv, ticketSrv, operatorSrv, casdoorClient)
 
 	return &App{
 		pgClient:       postgresClient,

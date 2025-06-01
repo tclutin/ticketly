@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/tclutin/ticketly/ticketly_api/internal/models"
 )
 
@@ -26,4 +27,11 @@ type MessageRepository interface {
 	Update(ctx context.Context, messageId uint64, msg models.Message) error
 	GetById(ctx context.Context, messageId uint64) (models.Message, error)
 	GetAll(ctx context.Context, ticketId uint64) ([]models.MessagePreview, error)
+}
+
+type OperatorRepository interface {
+	Create(ctx context.Context, operator models.Operator) (uint64, error)
+	GetByCasdoorId(ctx context.Context, casdoorId uuid.UUID) (models.Operator, error)
+	Update(ctx context.Context, operator models.Operator) error
+	GetById(ctx context.Context, operatorId uint64) (models.Operator, error)
 }

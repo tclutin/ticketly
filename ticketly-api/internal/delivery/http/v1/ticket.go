@@ -1,7 +1,9 @@
 package v1
 
 import (
+	"github.com/casdoor/casdoor-go-sdk/casdoorsdk"
 	"github.com/gin-gonic/gin"
+	"github.com/tclutin/ticketly/ticketly_api/internal/delivery/http/middleware"
 	"github.com/tclutin/ticketly/ticketly_api/internal/delivery/http/v1/request"
 	"github.com/tclutin/ticketly/ticketly_api/internal/service"
 	"github.com/tclutin/ticketly/ticketly_api/internal/service/ticket"
@@ -19,20 +21,16 @@ func NewTicketHandler(service service.TicketService) *TicketHandler {
 	}
 }
 
-func (t *TicketHandler) Bind(router *gin.RouterGroup) {
+// Bind в будущем прикрутить casdoor middleware
+func (t *TicketHandler) Bind(router *gin.RouterGroup, srv service.OperatorService, client *casdoorsdk.Client) {
 	ticketsGroup := router.Group("/tickets")
 	{
-		ticketsGroup.GET("", t.GetAll)
 		ticketsGroup.POST("", t.Create)
-		ticketsGroup.POST("/:ticket_id/close", t.Close)
-		ticketsGroup.POST("/:ticket_id/assign", t.Assign)
-		ticketsGroup.GET("/:ticket_id/messages", t.GetHistory)
-		ticketsGroup.POST("/:ticket_id/messages", t.SendMessage)
-	}
-
-	operatorsGroup := router.Group("/operators")
-	{
-		operatorsGroup.GET("/tickets/connections", t.GetActiveConnections)
+		ticketsGroup.GET("", middleware.AuthMiddleware(srv, client), t.GetAll)
+		ticketsGroup.POST("/:ticket_id/close", middleware.AuthMiddleware(srv, client), t.Close)
+		ticketsGroup.POST("/:ticket_id/assign", middleware.AuthMiddleware(srv, client), t.Assign)
+		ticketsGroup.GET("/:ticket_id/messages", middleware.AuthMiddleware(srv, client), t.GetHistory)
+		ticketsGroup.POST("/:ticket_id/messages", middleware.AuthMiddleware(srv, client), t.SendMessage)
 	}
 }
 
@@ -62,18 +60,6 @@ func (t *TicketHandler) Create(c *gin.Context) {
 
 }
 
-func (t *TicketHandler) GetActiveConnections(c *gin.Context) {
-	operatorId := 228
-
-	connections, err := t.service.GetActiveConnections(c.Request.Context(), uint64(operatorId))
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-
-	c.JSON(http.StatusOK, connections)
-}
-
 func (t *TicketHandler) GetAll(c *gin.Context) {
 	tickets, err := t.service.GetAll(c.Request.Context())
 	if err != nil {
@@ -85,7 +71,12 @@ func (t *TicketHandler) GetAll(c *gin.Context) {
 
 func (t *TicketHandler) Assign(c *gin.Context) {
 	ticketStr := c.Param("ticket_id")
-	operatorId := 228
+
+	operatorId, ok := c.Get("operator_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "operator_id not found in context"})
+		return
+	}
 
 	ticketId, err := strconv.ParseUint(ticketStr, 10, 64)
 	if err != nil {
@@ -95,7 +86,7 @@ func (t *TicketHandler) Assign(c *gin.Context) {
 
 	assigned, err := t.service.Assign(c.Request.Context(), ticket.AssignTicketDTO{
 		TicketID:   ticketId,
-		OperatorID: uint64(operatorId),
+		OperatorID: operatorId.(uint64),
 	})
 
 	if err != nil {
@@ -126,7 +117,12 @@ func (t *TicketHandler) GetHistory(c *gin.Context) {
 
 func (t *TicketHandler) SendMessage(c *gin.Context) {
 	ticketStr := c.Param("ticket_id")
-	operaotrId := 228
+
+	operatorId, ok := c.Get("operator_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "operator_id not found in context"})
+		return
+	}
 
 	ticketId, err := strconv.ParseUint(ticketStr, 10, 64)
 	if err != nil {
@@ -144,7 +140,7 @@ func (t *TicketHandler) SendMessage(c *gin.Context) {
 
 	if err = t.service.SendMessage(c.Request.Context(), ticket.SendMessageDTO{
 		TicketID:   ticketId,
-		OperatorID: uint64(operaotrId),
+		OperatorID: operatorId.(uint64),
 		Message:    req.Message,
 	}); err != nil {
 		_ = c.Error(err)
@@ -158,7 +154,12 @@ func (t *TicketHandler) SendMessage(c *gin.Context) {
 
 func (t *TicketHandler) Close(c *gin.Context) {
 	ticketStr := c.Param("ticket_id")
-	operatorId := 228
+
+	operatorId, ok := c.Get("operator_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "operator_id not found in context"})
+		return
+	}
 
 	ticketId, err := strconv.ParseUint(ticketStr, 10, 64)
 	if err != nil {
@@ -176,7 +177,7 @@ func (t *TicketHandler) Close(c *gin.Context) {
 
 	if err = t.service.Close(c.Request.Context(), ticket.CloseTicketDTO{
 		TicketID:   ticketId,
-		OperatorID: uint64(operatorId),
+		OperatorID: operatorId.(uint64),
 		Message:    req.Content,
 	}); err != nil {
 		_ = c.Error(err)

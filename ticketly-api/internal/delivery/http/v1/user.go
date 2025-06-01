@@ -19,6 +19,7 @@ func NewUserHandler(service service.UserService) *UserHandler {
 	}
 }
 
+// Bind в будущем прикрутить casdoor middleware
 func (h *UserHandler) Bind(router *gin.RouterGroup) {
 	usersGroup := router.Group("/users")
 	{
